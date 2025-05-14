@@ -24,7 +24,6 @@ Please read this tutorial on handling missing values first, before working on di
 ```python
 import pandas as pd
 import numpy as np
-import sklearn
 from sklearn.ensemble import RandomForestClassifier
 import warnings
 import ssl
@@ -41,9 +40,13 @@ Load the dataset from the provided URL using pandas.
 
 ```python
 url = "https://raw.github.com/edwindj/datacleaning/master/data/carseats.csv"
+url2 = "https://raw.github.com/edwindj/datacleaning/master/data/dirty_iris.csv"
 response = requests.get(url, verify=False)
 data = StringIO(response.text)
+response2 = requests.get(url2, verify=False)
+data2 = StringIO(response2.text)
 carseats = pd.read_csv(data, sep=",")
+dirty_iris = pd.read_csv(data2, sep=",")
 print(carseats.head())
 ```
 
@@ -95,15 +98,127 @@ dirty_iris
 ```
 
 
-    ---------------------------------------------------------------------------
 
-    NameError                                 Traceback (most recent call last)
 
-    Cell In[4], line 1
-    ----> 1 dirty_iris
-    
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
-    NameError: name 'dirty_iris' is not defined
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Sepal.Length</th>
+      <th>Sepal.Width</th>
+      <th>Petal.Length</th>
+      <th>Petal.Width</th>
+      <th>Species</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>6.4</td>
+      <td>3.2</td>
+      <td>4.5</td>
+      <td>1.5</td>
+      <td>versicolor</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>6.3</td>
+      <td>3.3</td>
+      <td>6.0</td>
+      <td>2.5</td>
+      <td>virginica</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>6.2</td>
+      <td>NaN</td>
+      <td>5.4</td>
+      <td>2.3</td>
+      <td>virginica</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>5.0</td>
+      <td>3.4</td>
+      <td>1.6</td>
+      <td>0.4</td>
+      <td>setosa</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>5.7</td>
+      <td>2.6</td>
+      <td>3.5</td>
+      <td>1.0</td>
+      <td>versicolor</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>145</th>
+      <td>6.7</td>
+      <td>3.1</td>
+      <td>5.6</td>
+      <td>2.4</td>
+      <td>virginica</td>
+    </tr>
+    <tr>
+      <th>146</th>
+      <td>5.6</td>
+      <td>3.0</td>
+      <td>4.5</td>
+      <td>1.5</td>
+      <td>versicolor</td>
+    </tr>
+    <tr>
+      <th>147</th>
+      <td>5.2</td>
+      <td>3.5</td>
+      <td>1.5</td>
+      <td>0.2</td>
+      <td>setosa</td>
+    </tr>
+    <tr>
+      <th>148</th>
+      <td>6.4</td>
+      <td>3.1</td>
+      <td>NaN</td>
+      <td>1.8</td>
+      <td>virginica</td>
+    </tr>
+    <tr>
+      <th>149</th>
+      <td>5.8</td>
+      <td>2.6</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>versicolor</td>
+    </tr>
+  </tbody>
+</table>
+<p>150 rows × 5 columns</p>
+</div>
+
 
 
 ## Detecting NA
@@ -332,12 +447,12 @@ plt.show()
 
 ```python
 # Find outliers in Sepal.Length
-outliers = dirty_iris['Sepal.Length'][np.abs(carseats['Sepal.Length'] - carseats['Sepal.Length'].mean()) > (1.5 * carseats['Sepal.Length'].std())]
-outliers_idx = carseats.index[carseats['Sepal.Length'].isin(outliers)]
+outliers = dirty_iris['Sepal.Length'][np.abs(dirty_iris['Sepal.Length'] - dirty_iris['Sepal.Length'].mean()) > (1.5 * dirty_iris['Sepal.Length'].std())]
+outliers_idx = dirty_iris.index[dirty_iris['Sepal.Length'].isin(outliers)]
 
 # Print the rows with outliers
 print("Outliers:")
-print(carseats.loc[outliers_idx])
+print(dirty_iris.loc[outliers_idx])
 ```
 
     Outliers:
@@ -351,11 +466,11 @@ They all seem to be too big... may they were measured in mm i.o cm?
 
 ```python
 # Adjust the outliers (assuming they were measured in mm instead of cm)
-carseats.loc[outliers_idx, ['Sepal.Length', 'Sepal.Width', 'Petal.Length', 'Petal.Width']] /= 10
+dirty_iris.loc[outliers_idx, ['Sepal.Length', 'Sepal.Width', 'Petal.Length', 'Petal.Width']] /= 10
 
 # Summary of the adjusted data
 print("Summary of adjusted data:")
-print(carseats.describe())
+print(dirty_iris.describe())
 ```
 
     Summary of adjusted data:
@@ -377,7 +492,7 @@ Note that simple boxplot shows an extra outlier!
 ```python
 import seaborn as sns
 plt.figure(figsize=(10, 6))
-sns.boxplot(x='Species', y='Sepal.Length', data=carseats)
+sns.boxplot(x='Species', y='Sepal.Length', data=dirty_iris)
 plt.title('Boxplot of Sepal Length by Species')
 plt.xlabel('Species')
 plt.ylabel('Sepal Length')
@@ -402,7 +517,7 @@ def correct_sepal_width(df):
     return df
 
 # Apply the correction rule to the dataframe
-mydata_corrected = correct_sepal_width(carseats)
+mydata_corrected = correct_sepal_width(dirty_iris)
 
 # Print the corrected dataframe
 print(mydata_corrected)
@@ -429,13 +544,13 @@ Replace all erroneous values with NA using (the result of) localizeErrors:
 
 ```python
 # Apply the rules to the dataframe
-rules = check_rules(carseats)
+rules = check_rules(dirty_iris)
 violations = {rule: ~result for rule, result in rules.items()}
 violated_df = pd.DataFrame(violations)
 
 # Localize errors and set them to NA
 for col in violated_df.columns:
-    carseats.loc[violated_df[col], col.split()[0]] = np.nan
+    dirty_iris.loc[violated_df[col], col.split()[0]] = np.nan
 ```
 
 ## NA's pattern detection
@@ -461,15 +576,9 @@ msno.matrix(dirty_iris);
 ```
 
 
-    ---------------------------------------------------------------------------
-
-    NameError                                 Traceback (most recent call last)
-
-    Cell In[10], line 1
-    ----> 1 msno.matrix(dirty_iris);
     
-
-    NameError: name 'dirty_iris' is not defined
+![png](Exercise4_files/Exercise4_48_0.png)
+    
 
 
 ### Heatmap Plot (msno.heatmap):
@@ -1224,121 +1333,121 @@ binning_table.build()
       <th>0</th>
       <td>(-inf, 11.43)</td>
       <td>118</td>
-      <td>0.207</td>
+      <td>0.207381</td>
       <td>3</td>
       <td>115</td>
-      <td>0.975</td>
-      <td>-3.125</td>
-      <td>0.962</td>
-      <td>8.720e-02</td>
+      <td>0.974576</td>
+      <td>-3.12517</td>
+      <td>0.962483</td>
+      <td>0.087205</td>
     </tr>
     <tr>
       <th>1</th>
       <td>[11.43, 12.33)</td>
       <td>79</td>
-      <td>0.139</td>
+      <td>0.138840</td>
       <td>3</td>
       <td>76</td>
-      <td>0.962</td>
-      <td>-2.711</td>
-      <td>0.539</td>
-      <td>5.220e-02</td>
+      <td>0.962025</td>
+      <td>-2.710972</td>
+      <td>0.538763</td>
+      <td>0.052198</td>
     </tr>
     <tr>
       <th>2</th>
       <td>[12.33, 13.09)</td>
       <td>68</td>
-      <td>0.120</td>
+      <td>0.119508</td>
       <td>7</td>
       <td>61</td>
-      <td>0.897</td>
-      <td>-1.644</td>
-      <td>0.227</td>
-      <td>2.551e-02</td>
+      <td>0.897059</td>
+      <td>-1.643814</td>
+      <td>0.226599</td>
+      <td>0.025513</td>
     </tr>
     <tr>
       <th>3</th>
       <td>[13.09, 13.70)</td>
       <td>49</td>
-      <td>0.086</td>
+      <td>0.086116</td>
       <td>10</td>
       <td>39</td>
-      <td>0.796</td>
-      <td>-0.84</td>
-      <td>0.052</td>
-      <td>6.331e-03</td>
+      <td>0.795918</td>
+      <td>-0.839827</td>
+      <td>0.052131</td>
+      <td>0.006331</td>
     </tr>
     <tr>
       <th>4</th>
       <td>[13.70, 15.05)</td>
       <td>83</td>
-      <td>0.146</td>
+      <td>0.145870</td>
       <td>28</td>
       <td>55</td>
-      <td>0.663</td>
-      <td>-0.154</td>
-      <td>0.003</td>
-      <td>4.228e-04</td>
+      <td>0.662651</td>
+      <td>-0.153979</td>
+      <td>0.003385</td>
+      <td>0.000423</td>
     </tr>
     <tr>
       <th>5</th>
       <td>[15.05, 16.93)</td>
       <td>54</td>
-      <td>0.095</td>
+      <td>0.094903</td>
       <td>44</td>
       <td>10</td>
-      <td>0.185</td>
-      <td>2.003</td>
-      <td>0.360</td>
-      <td>3.868e-02</td>
+      <td>0.185185</td>
+      <td>2.002754</td>
+      <td>0.359566</td>
+      <td>0.038678</td>
     </tr>
     <tr>
       <th>6</th>
       <td>[16.93, inf)</td>
       <td>118</td>
-      <td>0.207</td>
+      <td>0.207381</td>
       <td>117</td>
       <td>1</td>
-      <td>0.008</td>
-      <td>5.283</td>
-      <td>2.901</td>
-      <td>1.834e-01</td>
+      <td>0.008475</td>
+      <td>5.283323</td>
+      <td>2.900997</td>
+      <td>0.183436</td>
     </tr>
     <tr>
       <th>7</th>
       <td>Special</td>
       <td>0</td>
-      <td>0.000</td>
+      <td>0.000000</td>
       <td>0</td>
       <td>0</td>
-      <td>0.000</td>
+      <td>0.000000</td>
       <td>0.0</td>
-      <td>0.000</td>
-      <td>0.000e+00</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
     </tr>
     <tr>
       <th>8</th>
       <td>Missing</td>
       <td>0</td>
-      <td>0.000</td>
+      <td>0.000000</td>
       <td>0</td>
       <td>0</td>
-      <td>0.000</td>
+      <td>0.000000</td>
       <td>0.0</td>
-      <td>0.000</td>
-      <td>0.000e+00</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
     </tr>
     <tr>
       <th>Totals</th>
       <td></td>
       <td>569</td>
-      <td>1.000</td>
+      <td>1.000000</td>
       <td>212</td>
       <td>357</td>
-      <td>0.627</td>
+      <td>0.627417</td>
       <td></td>
-      <td>5.044</td>
-      <td>3.938e-01</td>
+      <td>5.043925</td>
+      <td>0.393784</td>
     </tr>
   </tbody>
 </table>
@@ -1739,49 +1848,49 @@ violated_rows = carseats[violated_df["Income > 0"]]
 print(violated_rows)
 ```
 
-         Sales  CompPrice  Income  Advertising  Population  Price ShelveLoc   Age  \
-    9     4.69      132.0     NaN          0.0       131.0  124.0    Medium  76.0   
-    33    8.77      114.0     NaN         13.0       317.0  128.0      Good  50.0   
-    41    7.96      157.0     NaN          0.0       403.0  124.0       Bad  58.0   
-    42   10.43       77.0     NaN          0.0        25.0   24.0    Medium  50.0   
-    54    4.90      134.0     NaN         13.0        25.0  144.0    Medium  76.0   
-    91    4.81       97.0     NaN         11.0       267.0  107.0    Medium  80.0   
-    155   7.71       98.0     NaN          0.0        59.0   69.0    Medium  65.0   
-    162   3.63      122.0     NaN          0.0       424.0  149.0    Medium  51.0   
-    173   6.38      135.0     NaN          5.0       207.0  128.0    Medium  66.0   
-    184   9.95      132.0     NaN          7.0        35.0   97.0    Medium  60.0   
-    190   8.79      130.0     NaN         13.0       297.0  101.0    Medium  37.0   
-    216   5.73      141.0     NaN          0.0       243.0  144.0    Medium  34.0   
-    217   4.34      106.0     NaN          0.0       481.0  111.0    Medium  70.0   
-    234   9.43      115.0     NaN         11.0       289.0  129.0      Good  56.0   
-    287   6.88       95.0     NaN          4.0       208.0   72.0       Bad  44.0   
-    303  10.01      133.0     NaN         16.0       290.0   99.0    Medium  43.0   
-    309  11.18      131.0     NaN         13.0        33.0   80.0       Bad  68.0   
-    342   7.81      137.0     NaN         13.0       422.0  118.0    Medium  71.0   
-    346   8.97      132.0     NaN          0.0       144.0  125.0    Medium  33.0   
-    378   6.11      133.0     NaN          3.0       105.0  119.0    Medium  79.0   
+         Sales  CompPrice  Income  Advertising  Population  Price ShelveLoc  Age  \
+    9     4.69        132     NaN            0         131    124    Medium   76   
+    33    8.77        114     NaN           13         317    128      Good   50   
+    41    7.96        157     NaN            0         403    124       Bad   58   
+    42   10.43         77     NaN            0          25     24    Medium   50   
+    54    4.90        134     NaN           13          25    144    Medium   76   
+    91    4.81         97     NaN           11         267    107    Medium   80   
+    155   7.71         98     NaN            0          59     69    Medium   65   
+    162   3.63        122     NaN            0         424    149    Medium   51   
+    173   6.38        135     NaN            5         207    128    Medium   66   
+    184   9.95        132     NaN            7          35     97    Medium   60   
+    190   8.79        130     NaN           13         297    101    Medium   37   
+    216   5.73        141     NaN            0         243    144    Medium   34   
+    217   4.34        106     NaN            0         481    111    Medium   70   
+    234   9.43        115     NaN           11         289    129      Good   56   
+    287   6.88         95     NaN            4         208     72       Bad   44   
+    303  10.01        133     NaN           16         290     99    Medium   43   
+    309  11.18        131     NaN           13          33     80       Bad   68   
+    342   7.81        137     NaN           13         422    118    Medium   71   
+    346   8.97        132     NaN            0         144    125    Medium   33   
+    378   6.11        133     NaN            3         105    119    Medium   79   
     
          Education Urban   US  
-    9         17.0    No  Yes  
-    33        16.0   Yes  Yes  
-    41        16.0   Yes   No  
-    42        18.0   Yes   No  
-    54        17.0    No  Yes  
-    91        15.0   Yes  Yes  
-    155       16.0   Yes   No  
-    162       13.0   Yes   No  
-    173       18.0   Yes  Yes  
-    184       11.0    No  Yes  
-    190       13.0    No  Yes  
-    216       17.0   Yes   No  
-    217       14.0    No   No  
-    234       16.0    No  Yes  
-    287       17.0   Yes  Yes  
-    303       11.0   Yes  Yes  
-    309       18.0   Yes  Yes  
-    342       10.0    No  Yes  
-    346       13.0    No   No  
-    378       12.0   Yes  Yes  
+    9           17    No  Yes  
+    33          16   Yes  Yes  
+    41          16   Yes   No  
+    42          18   Yes   No  
+    54          17    No  Yes  
+    91          15   Yes  Yes  
+    155         16   Yes   No  
+    162         13   Yes   No  
+    173         18   Yes  Yes  
+    184         11    No  Yes  
+    190         13    No  Yes  
+    216         17   Yes   No  
+    217         14    No   No  
+    234         16    No  Yes  
+    287         17   Yes  Yes  
+    303         11   Yes  Yes  
+    309         18   Yes  Yes  
+    342         10    No  Yes  
+    346         13    No   No  
+    378         12   Yes  Yes  
     
 
 
